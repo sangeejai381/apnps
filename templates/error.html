@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Error {{ code }} | APNPS Admin Portal</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+<div style="min-height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; text-align:center; padding:24px;">
+  <div class="logo-badge" style="width:64px;height:64px;font-size:22px;">{{ code }}</div>
+  <h2 style="color:var(--navy); margin:0;">{{ message }}</h2>
+  <a href="{{ url_for('dashboard') }}" class="submit-btn small" style="text-decoration:none;">Go to Dashboard</a>
+</div>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In | APNPS Admin Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,800&family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+<div class="login-wrap">
+
+  <div class="login-info">
+    <div class="info-photo-placeholder">
+      <img src="{{ url_for('static', filename='img/school-building.webp') }}" alt="Annai Parvatham Nursery and Primary School building">
+      <div class="info-photo-caption">
+        <strong>Annai Parvatham Nursery &amp; Primary School</strong>
+        <span>81/82 Sundaram Chetty Street, Jalakantapuram &ndash; 636501, Salem</span>
+      </div>
+    </div>
+    <div class="info-text">
+      <p>Annai Parvatham Nursery and Primary School has, for years, been a trusted name in early
+      and primary education in Jalakantapuram, Salem &mdash; nurturing curious minds in a warm,
+      caring environment.</p>
+
+      <p>We believe every child deserves individual attention, a joyful learning atmosphere, and a
+      strong foundation in values, language, and basic skills that will carry them through the years
+      ahead.</p>
+
+      <p>Our dedicated teachers, safe campus, and child-first approach make us a school that parents
+      trust and children love to come back to, every single day.</p>
+
+      <p>This admin portal helps our school office manage students, staff, and fee records
+      accurately and transparently &mdash; so we can spend more time focused on what matters most:
+      the children.</p>
+    </div>
+    <div class="info-signoff">
+      <strong>Annai Parvatham Nursery and Primary School</strong>
+      <span>Jalakantapuram, Salem</span>
+    </div>
+  </div>
+
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-badge">
+        <img src="{{ url_for('static', filename='img/school-building.webp') }}" alt="">
+      </div>
+      <div class="logo-titles">
+        <strong>ANNAI PARVATHAM</strong>
+        <span>NURSERY &amp; PRIMARY SCHOOL</span>
+      </div>
+    </div>
+    <h2 class="portal-title">School Admin Portal</h2>
+    <p class="portal-subtitle">Sign in to manage students, staff and fee records.</p>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-msg login-flash">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="identifier">Email or Mobile No</label>
+      <input type="text" id="identifier" name="identifier" placeholder="Enter your email or mobile no" required>
+
+      <label for="pin">PIN</label>
+      <div class="pin-field">
+        <input type="password" id="pin" name="pin" placeholder="Enter your PIN" required>
+        <button type="button" id="togglePin" class="pin-toggle" aria-label="Show PIN">&#128065;</button>
+      </div>
+
+      <button type="submit" class="submit-btn">Submit</button>
+    </form>
+    <a href="#" class="forgot-link">Forgot PIN?</a>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

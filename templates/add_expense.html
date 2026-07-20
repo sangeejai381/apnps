@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Add Expense{% endblock %}
+{% block header %}Add Expense{% endblock %}
+{% block content %}
+
+<div class="panel narrow">
+  <div class="panel-head">
+    <h3>New Expense Entry</h3>
+  </div>
+  <form method="POST" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-row">
+      <label>Title</label>
+      <input type="text" name="title" placeholder="e.g. Textbooks for Std 3" required>
+    </div>
+    <div class="form-row">
+      <label>Category</label>
+      <select name="category" required>
+        <option value="" disabled selected>Choose a category&hellip;</option>
+        {% for c in category_choices %}
+          <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Amount (₹)</label>
+      <input type="number" step="0.01" min="0.01" name="amount" required>
+    </div>
+    <div class="form-row">
+      <label>Date</label>
+      <input type="date" name="date">
+    </div>
+    <div class="form-row">
+      <label>Note</label>
+      <input type="text" name="note" placeholder="optional">
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="submit-btn">Save Expense</button>
+      <a href="{{ url_for('expenses') }}" class="cancel-link">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
