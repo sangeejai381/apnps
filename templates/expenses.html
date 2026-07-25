@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}Total Expenses{% endblock %}
+{% block header %}Total Expenses{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Filter</h3>
+    <a href="{{ url_for('add_expense') }}" class="action-btn small">+ Add Expense</a>
+  </div>
+  <form method="GET" class="search-row">
+    <select name="category" class="filter-select">
+      <option value="">All Categories</option>
+      {% for c in category_choices %}
+        <option value="{{ c }}" {{ 'selected' if category_filter == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by title...">
+    <button type="submit" class="submit-btn small">Filter</button>
+    {% if q or category_filter %}
+      <a href="{{ url_for('expenses') }}" class="cancel-link">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="totals-scope-label">
+  {% if category_filter and q %}
+    Showing total for <strong>{{ category_filter }}</strong>, matching &ldquo;{{ q }}&rdquo;
+  {% elif category_filter %}
+    Showing total for <strong>{{ category_filter }}</strong>
+  {% elif q %}
+    Showing total for results matching &ldquo;{{ q }}&rdquo;
+  {% else %}
+    Showing total for <strong>all expenses</strong>
+  {% endif %}
+</div>
+
+<div class="card-grid three">
+  <div class="stat-card accent-amber">
+    <span class="stat-label">Total Expenses</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_expenses) }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Entries</span>
+    <span class="stat-value">{{ total_matching }}</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Expense Log</h3>
+  </div>
+
+  {% if expenses %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Title</th><th>Category</th><th>Amount</th><th>Date</th><th>Note</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for e in expenses %}
+      <tr>
+        <td>{{ e.title }}</td>
+        <td><span class="badge badge-category">{{ e.category }}</span></td>
+        <td>₹{{ "%.2f"|format(e.amount) }}</td>
+        <td>{{ e.date }}</td>
+        <td>{{ e.note or '-' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('delete_expense', expense_id=e.id) }}"
+                onsubmit="return confirm('Remove this expense entry?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="danger-btn">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {{ macros.render_pagination(pagination, 'expenses') }}
+  {% else %}
+  <p class="empty-state">
+    {% if q or category_filter %}
+      No expenses match this search/filter.
+    {% else %}
+      No expenses recorded yet. Click "Add Expense" to log your first purchase.
+    {% endif %}
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

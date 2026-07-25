@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block header %}Dashboard{% endblock %}
+{% block content %}
+
+<section class="hero-banner">
+  <div class="hero-banner-photo">
+    <img src="{{ url_for('static', filename='img/school-building.webp') }}" alt="Annai Parvatham Nursery and Primary School building">
+  </div>
+  <div class="hero-banner-copy">
+    <span class="hero-eyebrow">Welcome back, {{ session.get('admin_name','Admin') }}</span>
+    <h1 class="hero-school-name">Annai Parvatham<br>Nursery &amp; Primary School</h1>
+    <span class="hero-sub">Jalakantapuram &middot; Salem &mdash; Admin Portal Overview</span>
+  </div>
+</section>
+
+<div class="card-grid">
+  <div class="stat-card">
+    <span class="stat-icon">&#9660;</span>
+    <span class="stat-label">Total Students</span>
+    <span class="stat-value">{{ total_students }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">&#9679;</span>
+    <span class="stat-label">Total Teachers / Staff</span>
+    <span class="stat-value">{{ total_teachers }}</span>
+  </div>
+  <div class="stat-card accent-green">
+    <span class="stat-icon">&#8377;</span>
+    <span class="stat-label">Fees Collected</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_fee_collected) }}</span>
+  </div>
+  <div class="stat-card accent-red">
+    <span class="stat-icon">&#8377;</span>
+    <span class="stat-label">Fees Due</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_fee_due) }}</span>
+  </div>
+  <div class="stat-card accent-green">
+    <span class="stat-icon">&#9733;</span>
+    <span class="stat-label">Salary Paid</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_salary_paid) }}</span>
+  </div>
+  <div class="stat-card accent-red">
+    <span class="stat-icon">&#9733;</span>
+    <span class="stat-label">Salary Due</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_salary_due) }}</span>
+  </div>
+  <div class="stat-card accent-amber">
+    <span class="stat-icon">&#9632;</span>
+    <span class="stat-label">Total Expenses</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_expenses) }}</span>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Recent Fee Payments</h3>
+      <a href="{{ url_for('fees') }}" class="link-btn">View Fee Management &rarr;</a>
+    </div>
+    {% if recent_payments %}
+    <table class="data-table">
+      <thead>
+        <tr><th>Student</th><th>Amount</th><th>Mode</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {% for p in recent_payments %}
+        <tr>
+          <td>{{ p.student.name }}</td>
+          <td>₹{{ "%.2f"|format(p.amount) }}</td>
+          <td>{{ p.mode }}</td>
+          <td>{{ p.date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No fee payments recorded yet. Add a student and record a payment to see it here.</p>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Recent Expenses</h3>
+      <a href="{{ url_for('expenses') }}" class="link-btn">View Total Expenses &rarr;</a>
+    </div>
+    {% if recent_expenses %}
+    <table class="data-table">
+      <thead>
+        <tr><th>Title</th><th>Category</th><th>Amount</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {% for e in recent_expenses %}
+        <tr>
+          <td>{{ e.title }}</td>
+          <td>{{ e.category }}</td>
+          <td>₹{{ "%.2f"|format(e.amount) }}</td>
+          <td>{{ e.date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No expenses recorded yet. Log a purchase (books, furniture, etc.) to see it here.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="quick-actions">
+  <a href="{{ url_for('add_student') }}" class="action-btn">+ Add Student</a>
+  <a href="{{ url_for('add_teacher') }}" class="action-btn">+ Add Teacher / Staff</a>
+  <a href="{{ url_for('add_expense') }}" class="action-btn">+ Add Expense</a>
+  <a href="{{ url_for('fees') }}" class="action-btn secondary">Manage Fees</a>
+  <a href="{{ url_for('salary') }}" class="action-btn secondary">Manage Salary</a>
+  <a href="{{ url_for('expenses') }}" class="action-btn secondary">Manage Expenses</a>
+</div>
+
+{% endblock %}
