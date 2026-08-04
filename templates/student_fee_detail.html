@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% block title %}{{ s.name }} - Fee Detail{% endblock %}
+{% block header %}Fee Detail: {{ s.name }}{% endblock %}
+{% block content %}
+
+<div class="fee-status-banner {{ 'is-due' if balance > 0 else 'is-clear' }}">
+  <div class="fee-status-left">
+    <span class="fee-status-dot"></span>
+    <span class="fee-status-text">
+      {% if balance <= 0 and total_fee_for_year > 0 %}
+        Fully paid for {{ viewing_year }}
+      {% elif paid > 0 %}
+        Partially paid — ₹{{ "%.2f"|format(balance) }} still due
+      {% elif total_fee_for_year > 0 %}
+        No payments recorded yet — full amount due
+      {% else %}
+        No fee amount set for {{ viewing_year }} yet
+      {% endif %}
+    </span>
+  </div>
+  {% if s.fee.due_date %}
+  <div class="fee-status-due">Due date: <strong>{{ s.fee.due_date }}</strong></div>
+  {% endif %}
+</div>
+
+<div class="card-grid">
+  <div class="stat-card">
+    <span class="stat-label">Total Fee &middot; {{ viewing_year }}</span>
+    <span class="stat-value">₹{{ "%.2f"|format(gross_total) }}</span>
+    <span class="stat-footnote">What {{ s.name.split(' ')[0] }}'s class fee items add up to, before any concession</span>
+  </div>
+  <div class="stat-card {{ 'accent-green' if concession_total > 0 else '' }}">
+    <span class="stat-label">After Concession</span>
+    <span class="stat-value" {{ 'style="color:#b3184a;"'|safe if concession_total > 0 else '' }}>₹{{ "%.2f"|format(total_fee_for_year) }}</span>
+    <span class="stat-footnote">
+      {% if concession_total > 0 %}
+        ₹{{ "%.2f"|format(concession_total) }} concession applied — this is what {{ s.name.split(' ')[0] }} actually owes
+      {% else %}
+        No concession applied for {{ viewing_year }}
+      {% endif %}
+    </span>
+  </div>
+  <div class="stat-card accent-green">
+    <span class="stat-label">Paid &middot; all years</span>
+    <span class="stat-value">₹{{ "%.2f"|format(paid) }}</span>
+    <span class="stat-footnote">Every payment ever recorded, not just {{ viewing_year }}</span>
+  </div>
+  <div class="stat-card {{ 'accent-red' if balance > 0 else 'accent-green' }}">
+    <span class="stat-label">Balance Remaining</span>
+    <span class="stat-value">₹{{ "%.2f"|format(balance) }}</span>
+    <span class="stat-footnote">After-Concession Total &minus; Paid (all years)</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Fee Items — {{ s.class_name }}{% if s.section %} {{ s.section }}{% endif %}, {{ viewing_year }}</h3>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <form method="GET" class="search-row year-switch" style="margin:0;">
+        <label for="year-select" class="year-switch-label">Viewing academic year</label>
+        <select id="year-select" name="year" class="filter-select" onchange="this.form.submit()">
+          {% for y in year_choices %}
+            <option value="{{ y }}" {{ 'selected' if y == viewing_year }}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <form method="GET" class="search-row" style="margin:0;">
+        <span class="year-switch-label">or start/open another year</span>
+        <input type="text" name="year" placeholder="e.g. 2024-25" style="width:110px; padding:8px 10px; border:1.5px solid var(--border); border-radius:8px; font-size:13px;">
+        <button type="submit" class="action-btn secondary small">Go</button>
+      </form>
+    </div>
+  </div>
+  <p class="help-text" style="margin:-8px 0 14px;">
+    Typing a year that doesn't have any fee items yet opens it empty — use "Reset to Class Structure" below,
+    or "Add Fee Item", to start building that year's fee for {{ s.name.split(' ')[0] }}.
+  </p>
+
+  {% if items %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Category</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Note</th><th></th></tr></thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>
+          {% if item.category == concession_category %}
+            <span class="badge badge-concession">Concession</span> {{ item.custom_category }}
+          {% elif item.category == 'Other' %}
+            <span class="badge badge-category">Other</span> {{ item.custom_category }}
+          {% else %}
+            {{ item.category }}
+          {% endif %}
+          {% if item.differs_from_default %}
+            <br><span class="help-text" style="margin:2px 0 0;">customized — class default is ₹{{ "%.2f"|format(item.default_amount) }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('fees.student_fee_detail', student_id=s.id) }}" class="inline-amount-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="edit_item">
+            <input type="hidden" name="academic_year" value="{{ viewing_year }}">
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+            {% if item.category == concession_category %}
+              <span class="text-red">&minus;₹</span>
+              <input type="number" step="0.01" min="0.01" name="amount" value="{{ '%.2f'|format(item.amount|abs) }}" class="text-red">
+            {% else %}
+              <span>₹</span>
+              <input type="number" step="0.01" min="0.01" name="amount" value="{{ item.amount }}">
+            {% endif %}
+            <input type="text" name="note" value="{{ item.note or '' }}" placeholder="note (required if amount differs from default)" style="flex:1; min-width:160px; padding:6px 8px; border:1px solid var(--border); border-radius:7px; font-size:13px;">
+            <button type="submit" class="edit-btn">Save</button>
+          </form>
+        </td>
+        {% if item.category == concession_category %}
+        <td colspan="2" class="help-text" style="padding-left:16px;">not a payable category</td>
+        {% else %}
+        <td class="text-green">₹{{ "%.2f"|format(item.paid_amount) }}</td>
+        <td class="{{ 'text-red' if item.balance_amount > 0 else 'text-green' }}">₹{{ "%.2f"|format(item.balance_amount) }}</td>
+        {% endif %}
+        <td>{{ item.note or '-' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('fees.student_fee_detail', student_id=s.id) }}"
+                onsubmit="return confirm('Remove this fee item?{{ ' Any payments recorded against it will become unallocated.' if item.paid_amount and item.paid_amount > 0 else '' }}');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="delete_item">
+            <input type="hidden" name="academic_year" value="{{ viewing_year }}">
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+            <button type="submit" class="danger-btn">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th>Total (after concessions)</th><th colspan="4">₹{{ "%.2f"|format(total_fee_for_year) }}</th></tr>
+    </tfoot>
+  </table>
+  </div>
+  {% if unallocated_paid > 0 %}
+  <p class="help-text" style="margin-top:10px;">
+    ₹{{ "%.2f"|format(unallocated_paid) }} of the total paid isn't tied to any category above (recorded as a
+    general payment) — see Payment History below, or edit those entries to assign them to a category.
+  </p>
+  {% endif %}
+  {% else %}
+  <p class="empty-state">No fee items for {{ viewing_year }} yet. Add one below, or reset to the class structure if one's defined for {{ s.class_name }}.</p>
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('fees.student_fee_detail', student_id=s.id) }}" style="margin-top:14px;"
+        onsubmit="return confirm('Replace all of {{ viewing_year }}\'s fee items for {{ s.name }} with the current {{ s.class_name }} class structure? Any concessions recorded here will also be removed. This cannot be undone.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="reset_to_structure">
+    <input type="hidden" name="academic_year" value="{{ viewing_year }}">
+    <button type="submit" class="action-btn secondary small">&#8635; Reset to Class Structure</button>
+  </form>
+</div>
+
+<div class="three-col-panels">
+  <div class="panel">
+    <h3>Add Fee Item</h3>
+    <form method="POST" action="{{ url_for('fees.student_fee_detail', student_id=s.id) }}" class="form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="add_item">
+      <input type="hidden" name="academic_year" value="{{ viewing_year }}">
+      <div class="form-row">
+        <label>Category</label>
+        <select name="category" required>
+          <option value="" disabled selected>Choose a category&hellip;</option>
+          {% for c in category_choices %}
+            <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <label>If "Other" — specify category</label>
+        <input type="text" name="custom_category" placeholder="e.g. Annual Day Fund">
+      </div>
+      <div class="form-row">
+        <label>Amount (₹)</label>
+        <input type="number" step="0.01" min="0.01" name="amount" required>
+      </div>
+      <div class="form-row">
+        <label>Note</label>
+        <input type="text" name="note" placeholder="optional">
+      </div>
+      <button type="submit" class="submit-btn small">Add Item</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h3>Add Concession / Discount</h3>
+    <p class="help-text" style="margin-bottom:10px;">
+      Reduces {{ s.name.split(' ')[0] }}'s total fee for {{ viewing_year }} — e.g. a scholarship or sibling
+      discount. Shows as a separate line above and subtracts from the total automatically.
+    </p>
+    <form method="POST" action="{{ url_for('fees.student_fee_detail', student_id=s.id) }}" class="form-grid">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="add_concession">
+      <input type="hidden" name="academic_year" value="{{ viewing_year }}">
+      <div class="form-row">
+        <label>Reason</label>
+        <select name="reason" required>
+          <option value="" disabled selected>Choose a reason&hellip;</option>
+          {% for r in concession_reasons %}
+            <option value="{{ r }}">{{ r }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Discount Amount (₹)</label>
+        <input type="number" step="0.01" min="0.01" name="amount" required placeholder="e.g. 500">
+      </div>
+      <div class="form-row">
+        <label>Note</label>
+        <input type="text" name="note" placeholder="optional">
+      </div>
+      <button type="submit" class="submit-btn small">Apply Concession</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h3>Due Date &amp; Payment</h3>
+    <form method="POST" action="{{ url_for('fees.student_fee_detail', student_id=s.id) }}" class="form-grid" style="margin-bottom:18px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="update_due_date">
+      <div class="form-row">
+        <label>Due Date</label>
+        <input type="date" name="due_date" value="{{ s.fee.due_date or '' }}">
+      </div>
+      <button type="submit" class="submit-btn small">Update Due Date</button>
+    </form>
+    <hr>
+    <form method="POST" action="{{ url_for('fees.student_fee_detail', student_id=s.id) }}" class="form-grid" style="margin-top:14px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="add_payment">
+      <div class="form-row">
+        <label>Pay Towards</label>
+        <select name="fee_item_id">
+          <option value="">General (not tied to a category)</option>
+          {% for pi in payable_items %}
+            <option value="{{ pi.id }}">
+              {{ pi.custom_category if pi.category == 'Other' else pi.category }}
+              — ₹{{ "%.2f"|format(pi.balance_amount) }} due of ₹{{ "%.2f"|format(pi.amount) }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Amount (₹)</label>
+        <input type="number" step="0.01" min="0.01" name="amount" required>
+      </div>
+      <div class="form-row">
+        <label>Date</label>
+        <input type="date" name="date">
+      </div>
+      <div class="form-row">
+        <label>Mode</label>
+        <select name="mode">
+          <option>Cash</option>
+          <option>UPI</option>
+          <option>Bank Transfer</option>
+          <option>Cheque</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Note</label>
+        <input type="text" name="note" placeholder="optional">
+      </div>
+      <button type="submit" class="submit-btn small">Add Payment</button>
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <h3>Payment History</h3>
+  {% if payments %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Date</th><th>Amount</th><th>Category</th><th>Mode</th><th>Note</th><th></th><th></th></tr></thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td colspan="7" style="padding:0;">
+        <form method="POST" action="{{ url_for('fees.student_fee_detail', student_id=s.id) }}"
+              style="display:flex; align-items:center; gap:8px; padding:10px 12px; flex-wrap:wrap;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="edit_payment">
+          <input type="hidden" name="academic_year" value="{{ viewing_year }}">
+          <input type="hidden" name="payment_id" value="{{ p.id }}">
+          <input type="date" name="date" value="{{ p.date }}" style="width:150px; padding:6px 8px; border:1px solid var(--border); border-radius:7px; font-size:13px;">
+          <span style="color:var(--muted); font-size:13px;">₹</span>
+          <input type="number" step="0.01" min="0.01" name="amount" value="{{ p.amount }}" style="width:110px; padding:6px 8px; border:1px solid var(--border); border-radius:7px; font-size:13px;">
+          <select name="fee_item_id" style="padding:6px 8px; border:1px solid var(--border); border-radius:7px; font-size:13px;">
+            <option value="" {{ 'selected' if not p.fee_item_id }}>General</option>
+            {% for pi in payable_items %}
+              <option value="{{ pi.id }}" {{ 'selected' if p.fee_item_id == pi.id }}>{{ pi.custom_category if pi.category == 'Other' else pi.category }}</option>
+            {% endfor %}
+            {% if p.fee_item_id and p.fee_item and p.fee_item.academic_year != viewing_year %}
+              <option value="{{ p.fee_item.id }}" selected>{{ p.fee_item.custom_category if p.fee_item.category == 'Other' else p.fee_item.category }} ({{ p.fee_item.academic_year }})</option>
+            {% endif %}
+          </select>
+          <select name="mode" style="padding:6px 8px; border:1px solid var(--border); border-radius:7px; font-size:13px;">
+            {% for m in ['Cash','UPI','Bank Transfer','Cheque'] %}
+              <option value="{{ m }}" {{ 'selected' if p.mode == m }}>{{ m }}</option>
+            {% endfor %}
+          </select>
+          <input type="text" name="note" value="{{ p.note or '' }}" placeholder="note" style="flex:1; min-width:140px; padding:6px 8px; border:1px solid var(--border); border-radius:7px; font-size:13px;">
+          <button type="submit" class="edit-btn">Save</button>
+        </form>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="7" style="padding:0 12px 10px; border-bottom:1.5px solid var(--border);">
+          <a href="{{ url_for('fees.fee_receipt', payment_id=p.id) }}" target="_blank" class="link-btn">Print Receipt &rarr;</a>
+          &nbsp;&middot;&nbsp;
+          <form method="POST" action="{{ url_for('fees.delete_payment', payment_id=p.id) }}" style="display:inline;"
+                onsubmit="return confirm('Remove this payment entry?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="danger-btn" style="vertical-align:middle;">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty-state">No payments recorded yet.</p>
+  {% endif %}
+</div>
+
+<a href="{{ url_for('fees.fees') }}" class="cancel-link">&larr; Back to Fee Management</a>
+{% endblock %}

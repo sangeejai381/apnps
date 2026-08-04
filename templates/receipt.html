@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Receipt #{{ payment.id }} | APNPS</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="receipt-body">
+
+<div class="receipt-actions no-print">
+  <button type="button" class="submit-btn small" onclick="window.print()">&#128424; Print / Save as PDF</button>
+  <a href="javascript:window.close()" class="cancel-link">Close</a>
+</div>
+
+<div class="receipt-sheet">
+  <div class="receipt-header">
+    <div class="logo-badge">AP</div>
+    <div class="logo-titles">
+      <strong>ANNAI PARVATHAM NURSERY &amp; PRIMARY SCHOOL</strong>
+      <span>Jalakandapuram, Salem</span>
+    </div>
+  </div>
+
+  <h2 class="receipt-title">
+    {% if kind == 'fee' %}Fee Payment Receipt{% else %}Salary Payment Receipt{% endif %}
+  </h2>
+
+  <div class="receipt-meta">
+    <div><span>Receipt No.</span><strong>{{ '%05d'|format(payment.id) }}</strong></div>
+    <div><span>Payment Date</span><strong>{{ payment.date }}</strong></div>
+    <div><span>Printed On</span><strong>{{ printed_on }}</strong></div>
+  </div>
+
+  <table class="receipt-table">
+    <tbody>
+      {% if kind == 'fee' %}
+      <tr><th>Student Name</th><td>{{ person.name }}</td></tr>
+      <tr><th>Class</th><td>{{ person.class_name }}</td></tr>
+      <tr><th>Roll No.</th><td>{{ person.roll_no }}</td></tr>
+      <tr><th>Parent / Guardian</th><td>{{ person.parent_name or '-' }}</td></tr>
+      <tr><th>Payment Mode</th><td>{{ payment.mode }}</td></tr>
+      {% if kind == 'fee' %}
+      <tr><th>Paid Towards</th><td>{{ payment_category_label }}</td></tr>
+      {% endif %}
+      {% if payment.note %}<tr><th>Note</th><td>{{ payment.note }}</td></tr>{% endif %}
+      {% else %}
+      <tr><th>Staff Name</th><td>{{ person.name }}</td></tr>
+      <tr><th>Subject / Role</th><td>{{ person.subject or '-' }}</td></tr>
+      {% if payment.note %}<tr><th>Note</th><td>{{ payment.note }}</td></tr>{% endif %}
+      {% endif %}
+    </tbody>
+  </table>
+
+  <div class="receipt-amount">
+    <span>Amount Paid (This Payment)</span>
+    <strong>₹{{ "%.2f"|format(payment.amount) }}</strong>
+  </div>
+
+  {% if kind == 'fee' and fee_breakdown %}
+  <h3 style="font-family:var(--font-display); font-size:15px; color:var(--wine); margin:22px 0 10px;">Fee Breakdown</h3>
+  <table class="receipt-table">
+    <thead>
+      <tr><th>Category</th><th style="text-align:right;">Amount</th><th style="text-align:center;">Status</th></tr>
+    </thead>
+    <tbody>
+      {% for row in fee_breakdown %}
+      <tr>
+        <td>{{ row.label }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(row.amount) }}</td>
+        <td style="text-align:center;">
+          <span class="badge badge-{{ row.status|lower|replace(' ', '') }}">{{ row.status }}</span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if concession_breakdown %}
+  <table class="receipt-table" style="margin-top:-10px;">
+    <tbody>
+      {% for row in concession_breakdown %}
+      <tr>
+        <td><span class="badge badge-concession">Concession</span> {{ row.label }}</td>
+        <td style="text-align:right; color:#b3184a;">&minus;₹{{ "%.2f"|format(row.amount|abs) }}</td>
+        <td></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <div class="receipt-meta" style="margin-top:4px;">
+    <div><span>Total Fee ({{ person.fee.academic_year or '-' }})</span><strong>₹{{ "%.2f"|format(total_fee) }}</strong></div>
+    <div><span>Total Paid to Date</span><strong>₹{{ "%.2f"|format(total_paid_to_date) }}</strong></div>
+    <div><span>Balance Due</span><strong>{% if balance_due > 0 %}₹{{ "%.2f"|format(balance_due) }}{% else %}Fully Paid{% endif %}</strong></div>
+  </div>
+  {% endif %}
+
+  <div class="receipt-footer">
+    <div class="receipt-signoff">
+      <span>&nbsp;</span>
+      <strong>Authorized Signatory</strong>
+    </div>
+    <p class="receipt-note">This is a computer-generated receipt from the APNPS Admin Portal.</p>
+  </div>
+</div>
+
+</body>
+</html>

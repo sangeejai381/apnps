@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Add Student{% endblock %}
+{% block header %}Add Student{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>New Student Record</h3>
+    <div class="panel-head-actions">
+      <a href="{{ url_for('fee_structure.fee_structure') }}" class="link-btn">Set up class fee structure &rarr;</a>
+      <a href="{{ url_for('students.import_students') }}" class="link-btn">Use CSV import &rarr;</a>
+    </div>
+  </div>
+  <form method="POST" class="form-grid-2col">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-row">
+      <label>Full Name</label>
+      <input type="text" name="name" required>
+    </div>
+    <div class="form-row">
+      <label>Roll No</label>
+      <input type="text" name="roll_no" required>
+    </div>
+    <div class="form-row">
+      <label>Class</label>
+      <select name="class_name" required>
+        <option value="" disabled selected>Choose a class&hellip;</option>
+        {% for c in class_choices %}
+          <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Section</label>
+      <select name="section" required>
+        <option value="" disabled selected>Choose a section&hellip;</option>
+        {% for sec in section_choices %}
+          <option value="{{ sec }}">{{ sec }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Date of Birth</label>
+      <input type="date" name="dob">
+    </div>
+    <div class="form-row">
+      <label>Admission Date</label>
+      <input type="date" name="admission_date">
+    </div>
+    <div class="form-row">
+      <label>Parent / Guardian Name</label>
+      <input type="text" name="parent_name">
+    </div>
+    <div class="form-row">
+      <label>Contact Number</label>
+      <input type="text" name="contact">
+    </div>
+    <div class="form-row full-width">
+      <label>Address</label>
+      <input type="text" name="address" placeholder="e.g. 12 Gandhi Street, Salem">
+    </div>
+
+    <hr>
+    <p class="section-label">Fee (auto-fills from the class's Fee Structure if one is defined for the year below)</p>
+    <div class="form-row">
+      <label>Academic Year</label>
+      <input type="text" name="academic_year" value="{{ default_academic_year }}" placeholder="e.g. 2026-27">
+    </div>
+    <div class="form-row">
+      <label>Fee Due Date</label>
+      <input type="date" name="due_date">
+    </div>
+    <div class="form-row full-width">
+      <label>Total Fee for the Year (₹) — used only if no Fee Structure exists yet for this class/year</label>
+      <input type="number" step="0.01" min="0" name="total_fee" placeholder="0.00">
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="submit-btn">Save Student</button>
+      <a href="{{ url_for('students.students') }}" class="cancel-link">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

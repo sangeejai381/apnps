@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fee Structure — {{ class_name }} {{ academic_year }} | APNPS</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="receipt-body">
+
+<div class="receipt-actions no-print">
+  <button type="button" class="submit-btn small" onclick="window.print()">&#128424; Print / Save as PDF</button>
+  <a href="javascript:window.close()" class="cancel-link">Close</a>
+</div>
+
+<div class="receipt-sheet">
+  <div class="receipt-header">
+    <div class="logo-badge">AP</div>
+    <div class="logo-titles">
+      <strong>ANNAI PARVATHAM NURSERY &amp; PRIMARY SCHOOL</strong>
+      <span>Jalakandapuram, Salem</span>
+    </div>
+  </div>
+
+  <h2 class="receipt-title">Fee Structure — {{ class_name }} ({{ academic_year }})</h2>
+
+  <div class="receipt-meta">
+    <div><span>Class</span><strong>{{ class_name }}</strong></div>
+    <div><span>Academic Year</span><strong>{{ academic_year }}</strong></div>
+    <div><span>Printed On</span><strong>{{ printed_on }}</strong></div>
+  </div>
+
+  {% if rows %}
+  <table class="receipt-table">
+    <thead>
+      <tr><th>Category</th><th style="text-align:right;">Amount</th></tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{% if row.category == 'Other' %}{{ row.custom_category }}{% else %}{{ row.category }}{% endif %}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(row.amount) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="receipt-amount">
+    <span>Total for the Year</span>
+    <strong>₹{{ "%.2f"|format(total) }}</strong>
+  </div>
+  {% else %}
+  <p style="text-align:center; color:var(--muted); padding:30px 0;">No fee structure has been defined for {{ class_name }} in {{ academic_year }} yet.</p>
+  {% endif %}
+
+  <div class="receipt-footer">
+    <div class="receipt-signoff">
+      <span>&nbsp;</span>
+      <strong>Authorized Signatory</strong>
+    </div>
+    <p class="receipt-note">This is a computer-generated fee structure sheet from the APNPS Admin Portal.</p>
+  </div>
+</div>
+
+</body>
+</html>

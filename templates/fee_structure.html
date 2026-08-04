@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Fee Structure{% endblock %}
+{% block header %}Fee Structure{% endblock %}
+{% block content %}
+
+<div class="page-lede">
+  This is the <strong>class-wide fee template</strong> — the default categories and amounts a new student in
+  this class is billed for. It is not any individual student's bill. To manage what one particular student
+  owes or has paid, use <strong>Fee Management</strong> instead.
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Class &amp; Academic Year</h3>
+  </div>
+  <form method="GET" class="search-row">
+    <select name="class_name" class="filter-select" onchange="this.form.submit()">
+      {% for c in class_choices %}
+        <option value="{{ c }}" {{ 'selected' if class_name == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="academic_year" value="{{ academic_year }}" placeholder="e.g. 2026-27" style="max-width:140px;">
+    <button type="submit" class="submit-btn small">View</button>
+  </form>
+</div>
+
+<div class="card-grid three">
+  <div class="stat-card">
+    <span class="stat-label">Categories Defined</span>
+    <span class="stat-value">{{ rows|length }}</span>
+  </div>
+  <div class="stat-card accent-green">
+    <span class="stat-label">Total for {{ class_name }} ({{ academic_year }})</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total) }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Print</span>
+    <span class="stat-value" style="font-size:14px;">
+      <a href="{{ url_for('fee_structure.print_fee_structure', class_name=class_name, academic_year=academic_year) }}" target="_blank" class="link-btn">This Class &rarr;</a>
+      &nbsp;|&nbsp;
+      <a href="{{ url_for('fee_structure.print_fee_structure_all', academic_year=academic_year) }}" target="_blank" class="link-btn">All Classes &rarr;</a>
+    </span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>{{ class_name }} — {{ academic_year }} Fee Categories</h3>
+    {% if prev_year_has_rows %}
+    <form method="POST" action="{{ url_for('fee_structure.copy_fee_structure_previous_year') }}"
+          onsubmit="return confirm('Copy every category from {{ prev_year }} into {{ academic_year }}? Categories that already exist in {{ academic_year }} will be left as-is.');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="class_name" value="{{ class_name }}">
+      <input type="hidden" name="academic_year" value="{{ academic_year }}">
+      <button type="submit" class="action-btn secondary small">&#8635; Copy from {{ prev_year }}</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if rows %}
+  <table class="data-table">
+    <thead><tr><th>Category</th><th>Amount</th><th></th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>
+          {% if row.category == 'Other' %}
+            <span class="badge badge-category">Other</span> {{ row.custom_category }}
+          {% else %}
+            {{ row.category }}
+          {% endif %}
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('fee_structure.edit_fee_structure_row', row_id=row.id) }}" class="inline-amount-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <span>₹</span>
+            <input type="number" step="0.01" min="0.01" name="amount" value="{{ row.amount }}">
+            <button type="submit" class="edit-btn">Save</button>
+          </form>
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('fee_structure.delete_fee_structure_row', row_id=row.id) }}"
+                onsubmit="return confirm('Remove this category from the {{ class_name }} {{ academic_year }} structure? Students who already have it keep it until manually reset.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="danger-btn">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th>Total</th><th colspan="2">₹{{ "%.2f"|format(total) }}</th></tr>
+    </tfoot>
+  </table>
+  {% else %}
+  <p class="empty-state">No fee categories defined yet for {{ class_name }} in {{ academic_year }}. Add one below{% if prev_year %}, or copy from {{ prev_year }} if it has one{% endif %}.</p>
+  {% endif %}
+</div>
+
+<div class="panel narrow">
+  <h3>Add Category</h3>
+  <form method="POST" action="{{ url_for('fee_structure.add_fee_structure_row') }}" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="class_name" value="{{ class_name }}">
+    <input type="hidden" name="academic_year" value="{{ academic_year }}">
+    <div class="form-row">
+      <label>Category</label>
+      <select name="category" required>
+        <option value="" disabled selected>Choose a category&hellip;</option>
+        {% for c in category_choices %}
+          <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>If "Other" — specify category</label>
+      <input type="text" name="custom_category" placeholder="e.g. Annual Day Fund (only used if 'Other' is selected above)">
+    </div>
+    <div class="form-row">
+      <label>Amount (₹)</label>
+      <input type="number" step="0.01" min="0.01" name="amount" required>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="submit-btn">Add Category</button>
+    </div>
+  </form>
+</div>
+
+<p class="help-text">
+  This is the class-wide template — what a new student in {{ class_name }} for {{ academic_year }} owes by
+  default. Adding a student auto-fills their fee items from here. Editing a category's amount here only
+  changes the default going forward; it does not retroactively change what already-enrolled students owe —
+  use "Reset to class structure" on a specific student's fee page for that.
+</p>
+{% endblock %}

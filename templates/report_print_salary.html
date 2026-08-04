@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Salary Report | APNPS</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="receipt-body">
+
+<div class="receipt-actions no-print">
+  <button type="button" class="submit-btn small" onclick="window.print()">&#128424; Print / Save as PDF</button>
+  <a href="javascript:window.close()" class="cancel-link">Close</a>
+</div>
+
+<div class="report-sheet">
+  <div class="receipt-header">
+    <div class="logo-badge">AP</div>
+    <div class="logo-titles">
+      <strong>ANNAI PARVATHAM NURSERY &amp; PRIMARY SCHOOL</strong>
+      <span>Jalakandapuram, Salem</span>
+    </div>
+  </div>
+
+  <h2 class="receipt-title">Staff Salary Report</h2>
+
+  <div class="report-meta-row">
+    <div>Staff Members<br><strong>{{ summary.count }}</strong></div>
+    <div>Payment Period<br><strong>{{ date_from or 'Earliest' }} &rarr; {{ date_to or 'Latest' }}</strong></div>
+    <div>Generated On<br><strong>{{ printed_on }}</strong></div>
+  </div>
+
+  <div class="card-grid">
+    <div class="stat-card">
+      <span class="stat-label">Total Monthly Salary</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.monthly_total) }}</span>
+    </div>
+    <div class="stat-card accent-green">
+      <span class="stat-label">Paid (all time)</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.paid) }}</span>
+    </div>
+    <div class="stat-card accent-red">
+      <span class="stat-label">Balance Due</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.balance) }}</span>
+    </div>
+    <div class="stat-card accent-amber">
+      <span class="stat-label">Paid in Period</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.period_paid) }}</span>
+    </div>
+  </div>
+
+  <p class="report-section-title">Staff Summary</p>
+  <table class="receipt-table">
+    <thead>
+      <tr>
+        <th>Staff Name</th><th>Subject / Role</th><th style="text-align:right;">Monthly Salary</th>
+        <th style="text-align:right;">Paid</th><th style="text-align:right;">Balance</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.teacher.name }}</td>
+        <td>{{ r.teacher.subject or '-' }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(r.monthly) }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(r.paid) }}</td>
+        <td style="text-align:right; color:{{ 'var(--red)' if r.balance > 0 else 'var(--green)' }};">₹{{ "%.2f"|format(r.balance) }}</td>
+        <td><span class="badge badge-{{ r.status|lower|replace(' ', '') }}">{{ r.status }}</span></td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="6" style="color:var(--muted);">No staff on file yet.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <p class="report-section-title">Salary Payments {{ '(' + date_from + ' to ' + date_to + ')' if date_from or date_to else '(all time)' }}</p>
+  <table class="receipt-table">
+    <thead><tr><th>Date</th><th>Staff Name</th><th style="text-align:right;">Amount</th><th>Note</th></tr></thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td>{{ p.date }}</td>
+        <td>{{ p.teacher.name if p.teacher else '-' }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(p.amount) }}</td>
+        <td>{{ p.note or '-' }}</td>
+      </tr>
+      {% endfor %}
+      {% if not payments %}
+      <tr><td colspan="4" style="color:var(--muted);">No salary payments recorded in this period.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+  <div class="receipt-amount">
+    <span>Total Paid in Period</span>
+    <strong>₹{{ "%.2f"|format(summary.period_paid) }}</strong>
+  </div>
+
+  <div class="receipt-footer">
+    <p class="receipt-note">This is a computer-generated report from the APNPS Admin Portal.</p>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}Messages{% endblock %}
+{% block header %}Staff Messages{% endblock %}
+{% block content %}
+
+<div class="panel chat-panel">
+  <div class="panel-head">
+    <h3>Notice Board &amp; Staff Chat</h3>
+    <span class="chat-hint">Everyone using this portal shares one login — type your name so others know who posted.</span>
+  </div>
+
+  {% if pagination and pagination.pages > 1 %}
+    <p class="chat-page-note">
+      Showing page {{ pagination.page }} of {{ pagination.pages }} &middot;
+      {% if pagination.page == 1 %}most recent messages{% else %}older messages{% endif %}
+      &mdash; use <strong>Next</strong> below to see older messages, <strong>Prev</strong> for more recent ones.
+    </p>
+  {% endif %}
+
+  {% if thread %}
+  <div class="chat-feed">
+    {% for m in thread %}
+    <div class="chat-message">
+      <div class="chat-message-head">
+        <span class="chat-sender">{{ m.posted_by }}</span>
+        <span class="chat-time">{{ m.posted_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+      </div>
+      <div class="chat-content">{{ m.content }}</div>
+      <form method="POST" action="{{ url_for('messages.delete_message', message_id=m.id) }}"
+            class="chat-delete-form"
+            onsubmit="return confirm('Remove this message? This cannot be undone.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="chat-delete-btn" title="Remove this message">&times;</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {{ macros.render_pagination(pagination, 'messages.messages') }}
+  {% else %}
+  <p class="empty-state">No messages yet. Post the first one below — announcements, reminders, anything the staff should know.</p>
+  {% endif %}
+
+  <form method="POST" class="chat-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="chat-form-row">
+      <input type="text" name="posted_by" value="{{ remembered_name }}" placeholder="Your name" maxlength="80" required class="chat-name-input">
+      <textarea name="content" placeholder="Type a message for the staff&hellip;" maxlength="2000" required class="chat-content-input" rows="2"></textarea>
+      <button type="submit" class="submit-btn chat-send-btn">Send</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

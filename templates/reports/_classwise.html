@@ -1,0 +1,82 @@
+<div class="totals-scope-label">
+  One row per class &amp; section — a quick view of collection performance across the whole school.
+</div>
+
+<div class="card-grid">
+  <div class="stat-card">
+    <span class="stat-label">Classes &amp; Sections</span>
+    <span class="stat-value">{{ classwise_summary.classes }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Students</span>
+    <span class="stat-value">{{ classwise_summary.students }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Fee (Payable)</span>
+    <span class="stat-value">₹{{ "%.2f"|format(classwise_summary.payable) }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Concession Given</span>
+    <span class="stat-value" style="color:#b3184a;">₹{{ "%.2f"|format(classwise_summary.concession) }}</span>
+  </div>
+</div>
+<div class="card-grid">
+  <div class="stat-card accent-green">
+    <span class="stat-label">Collected</span>
+    <span class="stat-value">₹{{ "%.2f"|format(classwise_summary.paid) }}</span>
+  </div>
+  <div class="stat-card accent-red">
+    <span class="stat-label">Balance Due</span>
+    <span class="stat-value">₹{{ "%.2f"|format(classwise_summary.balance) }}</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Class &amp; Section-wise Summary</h3>
+    <div class="panel-head-actions">
+      <a href="{{ url_for('reports.report_csv', kind='classwise') }}" class="action-btn secondary small">&#8681; Download CSV</a>
+      <a href="{{ url_for('reports.report_print', kind='classwise') }}" target="_blank" class="action-btn small">Open Detailed Report &rarr;</a>
+    </div>
+  </div>
+
+  {% if classwise_rows %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead>
+      <tr><th>Class</th><th>Section</th><th>Students</th><th>Total Fee</th><th>Concession</th><th>Payable</th><th>Paid</th><th>Balance</th></tr>
+    </thead>
+    <tbody>
+      {% for r in classwise_rows %}
+      <tr>
+        <td class="cell-name">{{ r.class_name }}</td>
+        <td>{{ r.section }}</td>
+        <td>{{ r.student_count }}</td>
+        <td>₹{{ "%.2f"|format(r.gross_total) }}</td>
+        <td>
+          {% if r.concession > 0 %}
+            <span class="badge badge-concession">&minus;₹{{ "%.2f"|format(r.concession) }}</span>
+          {% else %}-{% endif %}
+        </td>
+        <td>₹{{ "%.2f"|format(r.payable) }}</td>
+        <td>₹{{ "%.2f"|format(r.paid) }}</td>
+        <td class="{{ 'text-red' if r.balance > 0 else 'text-green' }}">₹{{ "%.2f"|format(r.balance) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th>Total</th><th>&mdash;</th><th>{{ classwise_summary.students }}</th>
+        <th>₹{{ "%.2f"|format(classwise_summary.gross_total) }}</th>
+        <th>₹{{ "%.2f"|format(classwise_summary.concession) }}</th>
+        <th>₹{{ "%.2f"|format(classwise_summary.payable) }}</th>
+        <th>₹{{ "%.2f"|format(classwise_summary.paid) }}</th>
+        <th>₹{{ "%.2f"|format(classwise_summary.balance) }}</th>
+      </tr>
+    </tfoot>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty-state">No students on file yet.</p>
+  {% endif %}
+</div>

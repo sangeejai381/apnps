@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fee Structure — All Classes {{ academic_year }} | APNPS</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="receipt-body">
+
+<div class="receipt-actions no-print">
+  <button type="button" class="submit-btn small" onclick="window.print()">&#128424; Print / Save as PDF</button>
+  <a href="javascript:window.close()" class="cancel-link">Close</a>
+</div>
+
+{% if classes %}
+  {% for c in classes %}
+  <div class="receipt-sheet class-section">
+    <div class="receipt-header">
+      <div class="logo-badge">AP</div>
+      <div class="logo-titles">
+        <strong>ANNAI PARVATHAM NURSERY &amp; PRIMARY SCHOOL</strong>
+        <span>Jalakandapuram, Salem</span>
+      </div>
+    </div>
+
+    <h2 class="receipt-title">Fee Structure — {{ c.class_name }} ({{ academic_year }})</h2>
+
+    <table class="receipt-table">
+      <thead>
+        <tr><th>Category</th><th style="text-align:right;">Amount</th></tr>
+      </thead>
+      <tbody>
+        {% for row in c.rows %}
+        <tr>
+          <td>{% if row.category == 'Other' %}{{ row.custom_category }}{% else %}{{ row.category }}{% endif %}</td>
+          <td style="text-align:right;">₹{{ "%.2f"|format(row.amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="receipt-amount">
+      <span>Total for the Year</span>
+      <strong>₹{{ "%.2f"|format(c.total) }}</strong>
+    </div>
+
+    <div class="receipt-footer">
+      <p class="receipt-note">Printed on {{ printed_on }} — APNPS Admin Portal.</p>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="receipt-sheet">
+    <div class="receipt-header">
+      <div class="logo-badge">AP</div>
+      <div class="logo-titles">
+        <strong>ANNAI PARVATHAM NURSERY &amp; PRIMARY SCHOOL</strong>
+        <span>Jalakandapuram, Salem</span>
+      </div>
+    </div>
+    <p style="text-align:center; color:var(--muted); padding:30px 0;">No class has a fee structure defined for {{ academic_year }} yet.</p>
+  </div>
+{% endif %}
+
+</body>
+</html>

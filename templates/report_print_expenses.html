@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expenses Report | APNPS</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="receipt-body">
+
+<div class="receipt-actions no-print">
+  <button type="button" class="submit-btn small" onclick="window.print()">&#128424; Print / Save as PDF</button>
+  <a href="javascript:window.close()" class="cancel-link">Close</a>
+</div>
+
+<div class="report-sheet">
+  <div class="receipt-header">
+    <div class="logo-badge">AP</div>
+    <div class="logo-titles">
+      <strong>ANNAI PARVATHAM NURSERY &amp; PRIMARY SCHOOL</strong>
+      <span>Jalakandapuram, Salem</span>
+    </div>
+  </div>
+
+  <h2 class="receipt-title">Expenses Report</h2>
+
+  <div class="report-meta-row">
+    <div>Period<br><strong>{{ date_from or 'Earliest' }} &rarr; {{ date_to or 'Latest' }}</strong></div>
+    <div>Category<br><strong>{{ category or 'All' }}</strong></div>
+    <div>Generated On<br><strong>{{ printed_on }}</strong></div>
+  </div>
+
+  <div class="card-grid three">
+    <div class="stat-card">
+      <span class="stat-label">Entries</span>
+      <span class="stat-value">{{ rows|length }}</span>
+    </div>
+    <div class="stat-card accent-amber">
+      <span class="stat-label">Total</span>
+      <span class="stat-value">₹{{ "%.2f"|format(total) }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Categories</span>
+      <span class="stat-value">{{ by_category|length }}</span>
+    </div>
+  </div>
+
+  <p class="report-section-title">By Category</p>
+  <table class="receipt-table">
+    <thead><tr><th>Category</th><th style="text-align:right;">Amount</th></tr></thead>
+    <tbody>
+      {% for cat, amt in by_category %}
+      <tr><td>{{ cat }}</td><td style="text-align:right;">₹{{ "%.2f"|format(amt) }}</td></tr>
+      {% endfor %}
+      {% if not by_category %}
+      <tr><td colspan="2" style="color:var(--muted);">No expenses match this filter.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <p class="report-section-title">Expense Entries</p>
+  <table class="receipt-table">
+    <thead><tr><th>Date</th><th>Title</th><th>Category</th><th style="text-align:right;">Amount</th><th>Note</th></tr></thead>
+    <tbody>
+      {% for e in rows %}
+      <tr>
+        <td>{{ e.date }}</td>
+        <td>{{ e.title }}</td>
+        <td>{{ e.category }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(e.amount) }}</td>
+        <td>{{ e.note or '-' }}</td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="5" style="color:var(--muted);">No expenses match this filter.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+  <div class="receipt-amount" style="background:var(--amber-bg); border-color:rgba(181,121,10,0.25);">
+    <span style="color:var(--amber);">Total Expenses</span>
+    <strong style="color:var(--amber);">₹{{ "%.2f"|format(total) }}</strong>
+  </div>
+
+  <div class="receipt-footer">
+    <p class="receipt-note">This is a computer-generated report from the APNPS Admin Portal.</p>
+  </div>
+</div>
+
+</body>
+</html>

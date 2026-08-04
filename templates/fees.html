@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}Fee Management{% endblock %}
+{% block header %}Fee Management{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Filter</h3>
+  </div>
+  <form method="GET" class="search-row">
+    <select name="class_name" class="filter-select">
+      <option value="">All Classes</option>
+      {% for c in class_choices %}
+        <option value="{{ c }}" {{ 'selected' if class_filter == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by name or roll number...">
+    <button type="submit" class="submit-btn small">Filter</button>
+    {% if q or class_filter %}
+      <a href="{{ url_for('fees.fees') }}" class="cancel-link">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<div class="totals-scope-label">
+  {% if class_filter and q %}
+    Showing totals for <strong>{{ class_filter }}</strong>, matching &ldquo;{{ q }}&rdquo;
+  {% elif class_filter %}
+    Showing totals for <strong>{{ class_filter }}</strong>
+  {% elif q %}
+    Showing totals for search results matching &ldquo;{{ q }}&rdquo;
+  {% else %}
+    Showing totals for <strong>the whole school</strong>
+  {% endif %}
+</div>
+
+<div class="card-grid three">
+  <div class="stat-card">
+    <span class="stat-label">Total Fee Expected</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_expected) }}</span>
+  </div>
+  <div class="stat-card accent-green">
+    <span class="stat-label">Total Collected</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_collected) }}</span>
+  </div>
+  <div class="stat-card accent-red">
+    <span class="stat-label">Total Balance Due</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_due) }}</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Student Fee Ledger</h3>
+  </div>
+
+  {% if rows %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Student</th><th>Class</th><th>Total Fee</th><th>Concession</th><th>Payable</th><th>Paid</th><th>Balance</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.student.name }}</td>
+        <td>{{ r.student.class_name }}</td>
+        <td>₹{{ "%.2f"|format(r.gross_total) }}</td>
+        <td>
+          {% if r.concession > 0 %}
+            <span class="badge badge-concession">&minus;₹{{ "%.2f"|format(r.concession) }}</span>
+          {% else %}
+            <span class="empty-state" style="padding:0;">-</span>
+          {% endif %}
+        </td>
+        <td>₹{{ "%.2f"|format(r.total) }}</td>
+        <td>₹{{ "%.2f"|format(r.paid) }}</td>
+        <td class="{{ 'text-red' if r.balance > 0 else 'text-green' }}">₹{{ "%.2f"|format(r.balance) }}</td>
+        <td><span class="badge badge-{{ r.status|lower|replace(' ', '') }}">{{ r.status }}</span></td>
+        <td><a href="{{ url_for('fees.student_fee_detail', student_id=r.student.id) }}" class="link-btn">Manage &rarr;</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {{ macros.render_pagination(pagination, 'fees.fees') }}
+  {% else %}
+  <p class="empty-state">
+    {% if q or class_filter %}
+      No students match this search/filter.
+    {% else %}
+      No students yet. Add students first to manage their fees.
+    {% endif %}
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

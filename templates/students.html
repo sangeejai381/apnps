@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block title %}Students{% endblock %}
+{% block header %}Students{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>All Students ({{ total_matching }})</h3>
+    <div class="panel-head-actions">
+      <a href="{{ url_for('students.import_students') }}" class="action-btn secondary small">&#8593; Import CSV</a>
+      <a href="{{ url_for('students.add_student') }}" class="action-btn small">+ Add Student</a>
+    </div>
+  </div>
+
+  <form method="GET" class="search-row">
+    <select name="class_name" class="filter-select">
+      <option value="">All Classes</option>
+      {% for c in class_choices %}
+        <option value="{{ c }}" {{ 'selected' if class_filter == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <select name="section" class="filter-select">
+      <option value="">All Sections</option>
+      {% for sec in section_choices %}
+        <option value="{{ sec }}" {{ 'selected' if section_filter == sec }}>Section {{ sec }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by name or roll number...">
+    <button type="submit" class="submit-btn small">Filter</button>
+    {% if q or class_filter or section_filter %}
+      <a href="{{ url_for('students.students') }}" class="cancel-link">Clear</a>
+    {% endif %}
+  </form>
+
+  {% if students %}
+  <div class="table-scroll">
+  <table class="data-table students-table">
+    <thead>
+      <tr>
+        <th>Name</th><th>Class</th><th>Section</th><th>Roll No</th><th>Parent</th><th>Contact</th><th>Address</th><th>Fee</th><th class="col-actions">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td class="cell-name">{{ s.name }}</td>
+        <td>{{ s.class_name }}</td>
+        <td>{{ s.section or '-' }}</td>
+        <td>{{ s.roll_no }}</td>
+        <td class="cell-truncate" title="{{ s.parent_name or '' }}">{{ s.parent_name or '-' }}</td>
+        <td class="cell-truncate" title="{{ s.contact or '' }}">{{ s.contact or '-' }}</td>
+        <td class="cell-truncate" title="{{ s.address or '' }}">{{ s.address or '-' }}</td>
+        <td><a href="{{ url_for('fees.student_fee_detail', student_id=s.id) }}" class="link-btn">View Fee &rarr;</a></td>
+        <td class="col-actions">
+          <div class="action-btn-group">
+            <a href="{{ url_for('students.edit_student', student_id=s.id) }}" class="edit-btn">Edit</a>
+            <form method="POST" action="{{ url_for('students.delete_student', student_id=s.id) }}"
+                  onsubmit="return confirm('Remove {{ s.name }} and all fee records? This cannot be undone.');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="danger-btn">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {{ macros.render_pagination(pagination, 'students.students') }}
+  {% else %}
+  <p class="empty-state">
+    {% if q or class_filter or section_filter %}
+      No students match this search/filter.
+    {% else %}
+      No students found. Click "Add Student" to create the first record, or import a CSV of students.
+    {% endif %}
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

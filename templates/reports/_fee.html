@@ -1,0 +1,145 @@
+<div class="panel">
+  <div class="panel-head">
+    <h3>Build a Report</h3>
+  </div>
+  <p class="help-text" style="margin-bottom:16px;">
+    Choose whole school, one class (optionally one section), or a single student. The preview below updates
+    instantly — download it as a spreadsheet (CSV) or open the neatly formatted printable version to save as PDF.
+  </p>
+
+  <form method="GET" id="reportFilterForm">
+    <input type="hidden" name="kind" value="fee">
+    <div class="search-row" style="align-items:flex-end;">
+      <div class="form-row" style="margin-bottom:0;">
+        <label>Report For</label>
+        <select name="report_type" id="reportType" class="filter-select" onchange="apnpsToggleReportFields()">
+          <option value="all" {{ 'selected' if report_type == 'all' }}>Whole School</option>
+          <option value="class" {{ 'selected' if report_type == 'class' }}>One Class</option>
+          <option value="student" {{ 'selected' if report_type == 'student' }}>One Student</option>
+        </select>
+      </div>
+
+      <div class="form-row" id="classField" style="margin-bottom:0; {{ '' if report_type == 'class' else 'display:none;' }}">
+        <label>Class</label>
+        <select name="class_name" class="filter-select">
+          <option value="">Choose a class&hellip;</option>
+          {% for c in class_choices %}
+            <option value="{{ c }}" {{ 'selected' if class_name == c }}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-row" id="sectionField" style="margin-bottom:0; {{ '' if report_type == 'class' else 'display:none;' }}">
+        <label>Section (optional)</label>
+        <select name="section" class="filter-select">
+          <option value="">All Sections</option>
+          {% for sec in section_choices %}
+            <option value="{{ sec }}" {{ 'selected' if section == sec }}>{{ sec }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-row" id="studentField" style="margin-bottom:0; {{ '' if report_type == 'student' else 'display:none;' }}">
+        <label>Student</label>
+        <select name="student_id" class="filter-select">
+          <option value="">Choose a student&hellip;</option>
+          {% for st in students %}
+            <option value="{{ st.id }}" {{ 'selected' if student_id == st.id|string }}>{{ st.name }} — {{ st.class_name }}{% if st.section %} {{ st.section }}{% endif %} (Roll {{ st.roll_no }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit" class="submit-btn small">Preview</button>
+    </div>
+  </form>
+  <script>
+    function apnpsToggleReportFields() {
+      var type = document.getElementById('reportType').value;
+      document.getElementById('classField').style.display = (type === 'class') ? '' : 'none';
+      document.getElementById('sectionField').style.display = (type === 'class') ? '' : 'none';
+      document.getElementById('studentField').style.display = (type === 'student') ? '' : 'none';
+    }
+  </script>
+</div>
+
+<div class="totals-scope-label">
+  Showing report for <strong>{{ 'Whole School' if report_type == 'all' else (class_name + ' ' + section if report_type == 'class' and class_name else ('the selected student' if report_type == 'student' else 'nothing yet — choose a filter above')) }}</strong>
+</div>
+
+<div class="card-grid">
+  <div class="stat-card">
+    <span class="stat-label">Students</span>
+    <span class="stat-value">{{ summary.count }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Fee</span>
+    <span class="stat-value">₹{{ "%.2f"|format(summary.total_fee) }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Concession Given</span>
+    <span class="stat-value" style="color:#b3184a;">₹{{ "%.2f"|format(summary.concession) }}</span>
+  </div>
+  <div class="stat-card accent-green">
+    <span class="stat-label">Paid</span>
+    <span class="stat-value">₹{{ "%.2f"|format(summary.paid) }}</span>
+  </div>
+</div>
+{% if report_type == 'all' and total_expenses is not none %}
+<div class="card-grid">
+  <div class="stat-card accent-red">
+    <span class="stat-label">Balance Due</span>
+    <span class="stat-value">₹{{ "%.2f"|format(summary.balance) }}</span>
+  </div>
+  <div class="stat-card accent-amber">
+    <span class="stat-label">Total School Expenses</span>
+    <span class="stat-value">₹{{ "%.2f"|format(total_expenses) }}</span>
+    <span class="stat-footnote">Included automatically in the whole-school report</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Preview ({{ rows|length }} student{{ '' if rows|length == 1 else 's' }})</h3>
+    <div class="panel-head-actions">
+      <a href="{{ url_for('reports.report_csv', kind='fee', report_type=report_type, class_name=class_name, section=section, student_id=student_id) }}" class="action-btn secondary small">&#8681; Download CSV</a>
+      <a href="{{ url_for('reports.report_print', kind='fee', report_type=report_type, class_name=class_name, section=section, student_id=student_id) }}" target="_blank" class="action-btn small">Open Detailed Report &rarr;</a>
+    </div>
+  </div>
+
+  {% if rows %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead>
+      <tr><th>Student</th><th>Class</th><th>Total Fee</th><th>Concession</th><th>Paid</th><th>Balance</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="cell-name">{{ r.student.name }}</td>
+        <td>{{ r.student.class_name }}{% if r.student.section %} {{ r.student.section }}{% endif %}</td>
+        <td>₹{{ "%.2f"|format(r.total_fee) }}</td>
+        <td>
+          {% if r.concession_total > 0 %}
+            <span class="badge badge-concession">&minus;₹{{ "%.2f"|format(r.concession_total) }}</span>
+          {% else %}-{% endif %}
+        </td>
+        <td>₹{{ "%.2f"|format(r.paid) }}</td>
+        <td class="{{ 'text-red' if r.balance > 0 else 'text-green' }}">₹{{ "%.2f"|format(r.balance) }}</td>
+        <td><span class="badge badge-{{ r.status|lower|replace(' ', '') }}">{{ r.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty-state">
+    {% if report_type == 'class' and not class_name %}
+      Choose a class above to preview its report.
+    {% elif report_type == 'student' and not student_id %}
+      Choose a student above to preview their report.
+    {% else %}
+      No students match this filter.
+    {% endif %}
+  </p>
+  {% endif %}
+</div>
