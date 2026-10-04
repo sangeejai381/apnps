@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<title>{% block title %}Dashboard{% endblock %} | APNPS Teacher Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="app-shell" id="appShell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">
+        <img src="{{ url_for('static', filename='img/school-building.webp') }}" alt="">
+      </div>
+      <div class="brand-text">
+        <strong>Teacher Portal</strong>
+        <span>Annai Parvatham Nursery &amp; Primary</span>
+      </div>
+      <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" type="button" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('teacher_portal.dashboard') }}" data-label="Dashboard" class="{{ 'active' if request.endpoint=='teacher_portal.dashboard' }}">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"></rect><rect x="14" y="3" width="7" height="5" rx="1.5"></rect><rect x="14" y="12" width="7" height="9" rx="1.5"></rect><rect x="3" y="16" width="7" height="5" rx="1.5"></rect></svg></span>
+        <span class="label">Dashboard</span>
+      </a>
+      <a href="{{ url_for('teacher_portal.my_students') }}" data-label="My Students" class="{{ 'active' if request.endpoint=='teacher_portal.my_students' }}">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+        <span class="label">My Students</span>
+      </a>
+      <a href="{{ url_for('teacher_portal.change_password') }}" data-label="Change Password" class="{{ 'active' if request.endpoint=='teacher_portal.change_password' }}">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+        <span class="label">Change Password</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="{{ url_for('teacher_portal.logout') }}" class="logout-link" data-label="Sign out">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></span>
+        <span class="label">Sign out</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="main-area">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="topbar-title">{% block header %}Dashboard{% endblock %}</div>
+      </div>
+      <div class="topbar-admin">
+        <span class="admin-avatar">{{ session.get('teacher_name','T')[0] }}</span>
+        <span>{{ session.get('teacher_name','Teacher') }}</span>
+      </div>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-stack">
+          {% for m in messages %}
+            <div class="flash-msg">{{ m }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

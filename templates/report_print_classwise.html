@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Class &amp; Section-wise Report | APNPS</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="receipt-body">
+
+<div class="receipt-actions no-print">
+  <button type="button" class="submit-btn small" onclick="window.print()">&#128424; Print / Save as PDF</button>
+  <a href="javascript:window.close()" class="cancel-link">Close</a>
+</div>
+
+<div class="report-sheet">
+  <div class="receipt-header">
+    <div class="logo-badge">AP</div>
+    <div class="logo-titles">
+      <strong>ANNAI PARVATHAM NURSERY &amp; PRIMARY SCHOOL</strong>
+      <span>Jalakandapuram, Salem</span>
+    </div>
+  </div>
+
+  <h2 class="receipt-title">Class &amp; Section-wise Fee Summary</h2>
+
+  <div class="report-meta-row">
+    <div>Classes &amp; Sections<br><strong>{{ summary.classes }}</strong></div>
+    <div>Students<br><strong>{{ summary.students }}</strong></div>
+    <div>Generated On<br><strong>{{ printed_on }}</strong></div>
+  </div>
+
+  <div class="card-grid">
+    <div class="stat-card">
+      <span class="stat-label">Total Fee (Payable)</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.payable) }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Concession Given</span>
+      <span class="stat-value" style="color:#b3184a;">₹{{ "%.2f"|format(summary.concession) }}</span>
+    </div>
+    <div class="stat-card accent-green">
+      <span class="stat-label">Collected</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.paid) }}</span>
+    </div>
+    <div class="stat-card accent-red">
+      <span class="stat-label">Balance Due</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.balance) }}</span>
+    </div>
+  </div>
+
+  <p class="report-section-title">By Class &amp; Section</p>
+  <table class="receipt-table">
+    <thead>
+      <tr>
+        <th>Class</th><th>Section</th><th style="text-align:right;">Students</th>
+        <th style="text-align:right;">Total Fee</th><th style="text-align:right;">Concession</th>
+        <th style="text-align:right;">Payable</th><th style="text-align:right;">Paid</th>
+        <th style="text-align:right;">Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.class_name }}</td>
+        <td>{{ r.section }}</td>
+        <td style="text-align:right;">{{ r.student_count }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(r.gross_total) }}</td>
+        <td style="text-align:right; color:#b3184a;">{{ "₹%.2f"|format(r.concession) if r.concession > 0 else '-' }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(r.payable) }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(r.paid) }}</td>
+        <td style="text-align:right; color:{{ 'var(--red)' if r.balance > 0 else 'var(--green)' }};">₹{{ "%.2f"|format(r.balance) }}</td>
+      </tr>
+      {% endfor %}
+      {% if not rows %}
+      <tr><td colspan="8" style="color:var(--muted);">No students on file yet.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+  <div class="receipt-amount">
+    <span>Total Payable Across School</span>
+    <strong>₹{{ "%.2f"|format(summary.payable) }}</strong>
+  </div>
+
+  <div class="receipt-footer">
+    <p class="receipt-note">This is a computer-generated report from the APNPS Admin Portal.</p>
+  </div>
+</div>
+
+</body>
+</html>

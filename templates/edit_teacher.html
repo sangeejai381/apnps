@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Edit Teacher{% endblock %}
+{% block header %}Edit Teacher / Staff{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Edit Staff Record</h3>
+    <a href="{{ url_for('salary.teacher_salary_detail', teacher_id=t.id) }}" class="link-btn">Manage Salary &rarr;</a>
+  </div>
+  <form method="POST" class="form-grid-2col">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-row">
+      <label>Full Name</label>
+      <input type="text" name="name" value="{{ t.name }}" required>
+    </div>
+    <div class="form-row">
+      <label>Subject / Role</label>
+      <input type="text" name="subject" value="{{ t.subject or '' }}" placeholder="e.g. English, Admin Staff">
+    </div>
+    <div class="form-row">
+      <label>Contact Number</label>
+      <input type="text" name="contact" value="{{ t.contact or '' }}">
+    </div>
+    <div class="form-row">
+      <label>Joining Date</label>
+      <input type="date" name="joining_date" value="{{ t.joining_date or '' }}">
+    </div>
+
+    <hr>
+    <p class="section-label">Teacher Portal Access</p>
+    <p class="help-text full-width" style="margin:-6px 0 12px;">
+      Lets {{ t.name.split(' ')[0] }} sign in separately at
+      <code>/teacher/login</code> to see their assigned class and student fee status (view-only).
+      Leave the password blank to keep their existing one — only fill it in to set a new one.
+    </p>
+    <div class="form-row">
+      <label>Login Email</label>
+      <input type="email" name="portal_email" value="{{ t.email or '' }}" placeholder="teacher@example.com">
+    </div>
+    <div class="form-row">
+      <label>{{ 'Set New Password' if t.password_hash else 'Set Password' }}</label>
+      <input type="password" name="portal_password" placeholder="{{ 'leave blank to keep current password' if t.password_hash else 'at least 6 characters' }}" minlength="6">
+    </div>
+    <div class="form-row">
+      <label>Assigned Class</label>
+      <select name="assigned_class">
+        <option value="">Not assigned</option>
+        {% for c in class_choices %}
+          <option value="{{ c }}" {{ 'selected' if t.assigned_class == c }}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Assigned Section</label>
+      <select name="assigned_section">
+        <option value="">All Sections</option>
+        {% for sec in section_choices %}
+          <option value="{{ sec }}" {{ 'selected' if t.assigned_section == sec }}>{{ sec }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row full-width">
+      <label style="display:flex; align-items:center; gap:8px; font-weight:600;">
+        <input type="checkbox" name="portal_active" style="width:auto;" {{ 'checked' if t.portal_active }}>
+        Portal access active — {{ t.name.split(' ')[0] }} can sign in
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="submit-btn">Update Staff Member</button>
+      <a href="{{ url_for('teachers.teachers') }}" class="cancel-link">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

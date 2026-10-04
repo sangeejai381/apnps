@@ -1,0 +1,97 @@
+{% extends "teacher_base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block header %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="hero-banner">
+  <div class="hero-banner-photo">
+    <img src="{{ url_for('static', filename='img/school-building.webp') }}" alt="">
+  </div>
+  <div class="hero-banner-copy">
+    <span class="hero-eyebrow">Welcome back</span>
+    <span class="hero-school-name">{{ teacher.name }}</span>
+    <span class="hero-sub">{{ teacher.subject or 'Class Teacher' }} &middot; {{ class_label }}</span>
+  </div>
+</div>
+
+{% if not teacher.assigned_class %}
+<div class="page-lede">
+  <strong>No class assigned yet.</strong> Ask your school admin to assign you to a class and section from the
+  Teachers / Staff page — once that's set, your student counts and fee status will show up here.
+</div>
+{% endif %}
+
+<div class="card-grid">
+  <div class="stat-card">
+    <span class="stat-label">Total Students</span>
+    <span class="stat-value">{{ total_students }}</span>
+    <span class="stat-footnote">{{ class_label }}</span>
+  </div>
+  <div class="stat-card {{ 'accent-red' if pending_count > 0 else 'accent-green' }}">
+    <span class="stat-label">Students with Pending Fees</span>
+    <span class="stat-value">{{ pending_count }}</span>
+    <span class="stat-footnote">Balance still due, this class</span>
+  </div>
+  <div class="stat-card accent-green">
+    <span class="stat-label">Students Paid Today</span>
+    <span class="stat-value">{{ paid_today_count }}</span>
+    <span class="stat-footnote">Distinct students with a payment recorded today</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Upcoming Due Dates</span>
+    <span class="stat-value">{{ upcoming_due|length }}</span>
+    <span class="stat-footnote">Nearest 5 shown below</span>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="panel">
+    <h3>Upcoming Due Dates</h3>
+    {% if upcoming_due %}
+    <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th>Student</th><th>Due Date</th><th>Balance</th></tr></thead>
+      <tbody>
+        {% for r in upcoming_due %}
+        <tr>
+          <td class="cell-name">{{ r.student.name }} <span style="color:var(--muted); font-size:11.5px;">(Roll {{ r.student.roll_no }})</span></td>
+          <td>{{ r.student.fee.due_date }}</td>
+          <td class="text-red">₹{{ "%.2f"|format(r.balance) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="empty-state">No upcoming dues with a due date set for your class right now.</p>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <h3>Recent Notifications</h3>
+    <p class="chat-page-note">School-wide staff announcements, most recent first.</p>
+    {% if recent_notifications %}
+      {% for m in recent_notifications %}
+      <div class="chat-message" style="margin-bottom:10px;">
+        <div class="chat-message-head">
+          <span class="chat-sender">{{ m.posted_by }}</span>
+          <span class="chat-time">{{ m.posted_at.strftime('%d %b, %I:%M %p') if m.posted_at else '' }}</span>
+        </div>
+        <div class="chat-content">{{ m.content }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <p class="empty-state">No announcements yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel">
+  <h3>Quick Actions</h3>
+  <div class="quick-actions">
+    <a href="{{ url_for('teacher_portal.my_students') }}" class="action-btn">View My Students &rarr;</a>
+    <a href="{{ url_for('teacher_portal.change_password') }}" class="action-btn secondary">Change Password</a>
+  </div>
+</div>
+
+{% endblock %}

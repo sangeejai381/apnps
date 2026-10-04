@@ -1,0 +1,95 @@
+<div class="totals-scope-label">
+  Every staff member's monthly salary, paid-to-date, and balance — plus the payment log below, optionally
+  filtered to a date range.
+</div>
+
+<div class="card-grid">
+  <div class="stat-card">
+    <span class="stat-label">Staff Members</span>
+    <span class="stat-value">{{ salary_summary.count }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Total Monthly Salary</span>
+    <span class="stat-value">₹{{ "%.2f"|format(salary_summary.monthly_total) }}</span>
+  </div>
+  <div class="stat-card accent-green">
+    <span class="stat-label">Paid (all time)</span>
+    <span class="stat-value">₹{{ "%.2f"|format(salary_summary.paid) }}</span>
+  </div>
+  <div class="stat-card accent-red">
+    <span class="stat-label">Balance Due</span>
+    <span class="stat-value">₹{{ "%.2f"|format(salary_summary.balance) }}</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Staff Salary Summary</h3>
+    <div class="panel-head-actions">
+      <a href="{{ url_for('reports.report_csv', kind='salary', date_from=date_from, date_to=date_to) }}" class="action-btn secondary small">&#8681; Download CSV</a>
+      <a href="{{ url_for('reports.report_print', kind='salary', date_from=date_from, date_to=date_to) }}" target="_blank" class="action-btn small">Open Detailed Report &rarr;</a>
+    </div>
+  </div>
+  {% if salary_rows %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Staff Name</th><th>Subject / Role</th><th>Monthly Salary</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for r in salary_rows %}
+      <tr>
+        <td class="cell-name">{{ r.teacher.name }}</td>
+        <td>{{ r.teacher.subject or '-' }}</td>
+        <td>₹{{ "%.2f"|format(r.monthly) }}</td>
+        <td>₹{{ "%.2f"|format(r.paid) }}</td>
+        <td class="{{ 'text-red' if r.balance > 0 else 'text-green' }}">₹{{ "%.2f"|format(r.balance) }}</td>
+        <td><span class="badge badge-{{ r.status|lower|replace(' ', '') }}">{{ r.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty-state">No staff on file yet.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Salary Payment Log</h3>
+  </div>
+  <form method="GET" class="search-row" style="align-items:flex-end;">
+    <input type="hidden" name="kind" value="salary">
+    <div class="form-row" style="margin-bottom:0;">
+      <label>From</label>
+      <input type="date" name="date_from" value="{{ date_from }}" class="filter-select">
+    </div>
+    <div class="form-row" style="margin-bottom:0;">
+      <label>To</label>
+      <input type="date" name="date_to" value="{{ date_to }}" class="filter-select">
+    </div>
+    <button type="submit" class="submit-btn small">Filter</button>
+  </form>
+  <p class="totals-scope-label">
+    Total paid in this period: <strong>₹{{ "%.2f"|format(salary_summary.period_paid) }}</strong>
+    ({{ salary_payments|length }} payment{{ '' if salary_payments|length == 1 else 's' }})
+  </p>
+  {% if salary_payments %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Date</th><th>Staff Name</th><th>Amount</th><th>Note</th></tr></thead>
+    <tbody>
+      {% for p in salary_payments %}
+      <tr>
+        <td>{{ p.date }}</td>
+        <td>{{ p.teacher.name if p.teacher else '-' }}</td>
+        <td>₹{{ "%.2f"|format(p.amount) }}</td>
+        <td>{{ p.note or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty-state">No salary payments recorded in this period.</p>
+  {% endif %}
+</div>

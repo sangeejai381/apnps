@@ -1,0 +1,40 @@
+{% extends "teacher_base.html" %}
+{% block title %}My Students{% endblock %}
+{% block header %}My Students{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>{{ class_label }}</h3>
+  </div>
+  <p class="help-text" style="margin-bottom:14px;">
+    View-only — fee status and payment records are managed by the school office. Contact admin if you spot
+    something that looks wrong.
+  </p>
+
+  {% if not teacher.assigned_class %}
+  <p class="empty-state">No class assigned yet. Ask your school admin to assign you to a class and section.</p>
+  {% elif rows %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Roll No</th><th>Name</th><th>Total Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.student.roll_no }}</td>
+        <td class="cell-name">{{ r.student.name }}</td>
+        <td>₹{{ "%.2f"|format(r.total) }}</td>
+        <td>₹{{ "%.2f"|format(r.paid) }}</td>
+        <td class="{{ 'text-red' if r.balance > 0 else 'text-green' }}">₹{{ "%.2f"|format(r.balance) }}</td>
+        <td><span class="badge badge-{{ r.status|lower|replace(' ', '') }}">{{ r.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty-state">No students in {{ class_label }} yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

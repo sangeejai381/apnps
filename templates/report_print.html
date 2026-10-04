@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Report — {{ scope_label }} | APNPS</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="receipt-body">
+
+<div class="receipt-actions no-print">
+  <button type="button" class="submit-btn small" onclick="window.print()">&#128424; Print / Save as PDF</button>
+  <a href="javascript:window.close()" class="cancel-link">Close</a>
+</div>
+
+<!-- Cover / summary page -->
+<div class="report-sheet class-section">
+  <div class="receipt-header">
+    <div class="logo-badge">AP</div>
+    <div class="logo-titles">
+      <strong>ANNAI PARVATHAM NURSERY &amp; PRIMARY SCHOOL</strong>
+      <span>Jalakandapuram, Salem</span>
+    </div>
+  </div>
+
+  <h2 class="receipt-title">Fee &amp; Concession Report — {{ scope_label }}</h2>
+
+  <div class="report-meta-row">
+    <div>Scope<br><strong>{{ scope_label }}</strong></div>
+    <div>Students Covered<br><strong>{{ summary.count }}</strong></div>
+    <div>Generated On<br><strong>{{ printed_on }}</strong></div>
+  </div>
+
+  <div class="card-grid">
+    <div class="stat-card">
+      <span class="stat-label">Total Fee</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.total_fee) }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Concession Given</span>
+      <span class="stat-value" style="color:#b3184a;">₹{{ "%.2f"|format(summary.concession) }}</span>
+    </div>
+    <div class="stat-card accent-green">
+      <span class="stat-label">Paid</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.paid) }}</span>
+    </div>
+    <div class="stat-card accent-red">
+      <span class="stat-label">Balance Due</span>
+      <span class="stat-value">₹{{ "%.2f"|format(summary.balance) }}</span>
+    </div>
+  </div>
+
+  {% if expense_summary %}
+  <p class="report-section-title">School Expenses (all-time, all categories)</p>
+  <table class="receipt-table">
+    <thead><tr><th>Category</th><th style="text-align:right;">Amount</th></tr></thead>
+    <tbody>
+      {% for cat, amt in expense_summary.by_category %}
+      <tr><td>{{ cat }}</td><td style="text-align:right;">₹{{ "%.2f"|format(amt) }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="receipt-amount" style="background:var(--amber-bg); border-color:rgba(181,121,10,0.25);">
+    <span style="color:var(--amber);">Total Expenses</span>
+    <strong style="color:var(--amber);">₹{{ "%.2f"|format(expense_summary.total) }}</strong>
+  </div>
+  {% endif %}
+
+  {% if rows|length > 1 %}
+  <p class="report-section-title">All Students — Overview</p>
+  <table class="receipt-table">
+    <thead>
+      <tr>
+        <th>Student</th><th>Class</th><th style="text-align:right;">Total Fee</th>
+        <th style="text-align:right;">Concession</th><th style="text-align:right;">Paid</th>
+        <th style="text-align:right;">Balance</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.student.name }} <span style="color:var(--muted); font-size:11px;">(Roll {{ r.student.roll_no }})</span></td>
+        <td>{{ r.student.class_name }}{% if r.student.section %} {{ r.student.section }}{% endif %}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(r.total_fee) }}</td>
+        <td style="text-align:right; color:#b3184a;">{{ "₹%.2f"|format(r.concession_total) if r.concession_total > 0 else '-' }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(r.paid) }}</td>
+        <td style="text-align:right; color:{{ 'var(--red)' if r.balance > 0 else 'var(--green)' }};">₹{{ "%.2f"|format(r.balance) }}</td>
+        <td><span class="badge badge-{{ r.status|lower|replace(' ', '') }}">{{ r.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if not rows %}
+  <p style="text-align:center; color:var(--muted); padding:30px 0;">No students match this filter.</p>
+  {% endif %}
+
+  <div class="receipt-footer">
+    <p class="receipt-note">This is a computer-generated report from the APNPS Admin Portal.
+      {% if rows %}Per-student detail follows on the next page{{ 's' if rows|length > 1 }}.{% endif %}</p>
+  </div>
+</div>
+
+<!-- One detailed page per student -->
+{% for r in rows %}
+<div class="report-sheet class-section">
+  <div class="receipt-header">
+    <div class="logo-badge">AP</div>
+    <div class="logo-titles">
+      <strong>ANNAI PARVATHAM NURSERY &amp; PRIMARY SCHOOL</strong>
+      <span>Jalakandapuram, Salem</span>
+    </div>
+  </div>
+  <h2 class="receipt-title">Student Fee Report — {{ r.student.name }}</h2>
+
+  <div class="report-student-head">
+    <div><span>Roll No</span><strong>{{ r.student.roll_no }}</strong></div>
+    <div><span>Class</span><strong>{{ r.student.class_name }}{% if r.student.section %} {{ r.student.section }}{% endif %}</strong></div>
+    <div><span>Academic Year</span><strong>{{ r.academic_year }}</strong></div>
+    <div><span>Parent / Guardian</span><strong>{{ r.student.parent_name or '-' }}</strong></div>
+    <div><span>Contact</span><strong>{{ r.student.contact or '-' }}</strong></div>
+    <div><span>Due Date</span><strong>{{ r.due_date or '-' }}</strong></div>
+  </div>
+
+  <div class="card-grid three">
+    <div class="stat-card">
+      <span class="stat-label">Total Fee</span>
+      <span class="stat-value">₹{{ "%.2f"|format(r.total_fee) }}</span>
+    </div>
+    <div class="stat-card accent-green">
+      <span class="stat-label">Paid</span>
+      <span class="stat-value">₹{{ "%.2f"|format(r.paid) }}</span>
+    </div>
+    <div class="stat-card {{ 'accent-red' if r.balance > 0 else 'accent-green' }}">
+      <span class="stat-label">Balance</span>
+      <span class="stat-value">₹{{ "%.2f"|format(r.balance) }}</span>
+    </div>
+  </div>
+
+  <p class="report-section-title">Fee Items</p>
+  <table class="receipt-table">
+    <thead><tr><th>Category</th><th style="text-align:right;">Amount</th></tr></thead>
+    <tbody>
+      {% for item in r.fee_lines %}
+      <tr>
+        <td>{% if item.category == 'Other' %}{{ item.custom_category }}{% else %}{{ item.category }}{% endif %}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(item.amount) }}</td>
+      </tr>
+      {% endfor %}
+      {% for item in r.concession_lines %}
+      <tr>
+        <td><span class="badge badge-concession">Concession</span> {{ item.custom_category }}</td>
+        <td style="text-align:right; color:#b3184a;">&minus;₹{{ "%.2f"|format(item.amount|abs) }}</td>
+      </tr>
+      {% endfor %}
+      {% if not r.fee_lines and not r.concession_lines %}
+      <tr><td colspan="2" style="color:var(--muted);">No fee items recorded for {{ r.academic_year }}.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+  <div class="receipt-amount">
+    <span>Total Fee (after concessions) &middot; Status: {{ r.status }}</span>
+    <strong>₹{{ "%.2f"|format(r.total_fee) }}</strong>
+  </div>
+
+  <p class="report-section-title">Payment History</p>
+  {% if r.payments %}
+  <table class="receipt-table">
+    <thead><tr><th>Date</th><th>Mode</th><th>Note</th><th style="text-align:right;">Amount</th></tr></thead>
+    <tbody>
+      {% for p in r.payments %}
+      <tr>
+        <td>{{ p.date }}</td>
+        <td>{{ p.mode }}</td>
+        <td>{{ p.note or '-' }}</td>
+        <td style="text-align:right;">₹{{ "%.2f"|format(p.amount) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:var(--muted); font-size:13px;">No payments recorded yet.</p>
+  {% endif %}
+
+  <div class="receipt-footer">
+    <p class="receipt-note">Printed on {{ printed_on }} — APNPS Admin Portal.</p>
+  </div>
+</div>
+{% endfor %}
+
+</body>
+</html>

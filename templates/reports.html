@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block header %}Reports{% endblock %}
+{% block content %}
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Choose a Report</h3>
+  </div>
+  <div class="quick-actions" style="margin-bottom:4px;">
+    <a href="{{ url_for('reports.reports', kind='fee') }}" class="action-btn {{ 'secondary' if kind != 'fee' }} small">Student &amp; Class Fee Report</a>
+    <a href="{{ url_for('reports.reports', kind='classwise') }}" class="action-btn {{ 'secondary' if kind != 'classwise' }} small">Class &amp; Section-wise Summary</a>
+    <a href="{{ url_for('reports.reports', kind='salary') }}" class="action-btn {{ 'secondary' if kind != 'salary' }} small">Staff Salary Report</a>
+    <a href="{{ url_for('reports.reports', kind='expenses') }}" class="action-btn {{ 'secondary' if kind != 'expenses' }} small">Expenses Report</a>
+  </div>
+</div>
+
+{% if kind == 'fee' %}
+  {% include "reports/_fee.html" %}
+{% elif kind == 'classwise' %}
+  {% include "reports/_classwise.html" %}
+{% elif kind == 'salary' %}
+  {% include "reports/_salary.html" %}
+{% elif kind == 'expenses' %}
+  {% include "reports/_expenses.html" %}
+{% endif %}
+
+{% endblock %}

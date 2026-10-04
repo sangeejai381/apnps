@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Edit Expense{% endblock %}
+{% block header %}Edit Expense{% endblock %}
+{% block content %}
+
+<div class="panel narrow">
+  <div class="panel-head">
+    <h3>Edit Expense Entry</h3>
+  </div>
+  <form method="POST" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-row">
+      <label>Title</label>
+      <input type="text" name="title" value="{{ e.title }}" placeholder="e.g. Textbooks for Std 3" required>
+    </div>
+    <div class="form-row">
+      <label>Category</label>
+      <select name="category" required>
+        <option value="" disabled>Choose a category&hellip;</option>
+        {% for c in category_choices %}
+          <option value="{{ c }}" {{ 'selected' if e.category == c }}>{{ c }}</option>
+        {% endfor %}
+        {% if e.category not in category_choices %}
+          <option value="Other" selected>Other</option>
+        {% endif %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label>If "Other" — specify category</label>
+      <input type="text" name="custom_category"
+             value="{{ e.category if e.category not in category_choices else '' }}"
+             placeholder="e.g. School Van Repair (only used if 'Other' is selected above)">
+    </div>
+    <div class="form-row">
+      <label>Amount (₹)</label>
+      <input type="number" step="0.01" min="0.01" name="amount" value="{{ e.amount }}" required>
+    </div>
+    <div class="form-row">
+      <label>Date</label>
+      <input type="date" name="date" value="{{ e.date or '' }}">
+    </div>
+    <div class="form-row">
+      <label>Note</label>
+      <input type="text" name="note" value="{{ e.note or '' }}" placeholder="optional">
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="submit-btn">Update Expense</button>
+      <a href="{{ url_for('expenses.expenses') }}" class="cancel-link">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

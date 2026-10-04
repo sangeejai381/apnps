@@ -1,0 +1,103 @@
+<div class="totals-scope-label">
+  Category breakdown plus the itemized expense list — filter by date range and/or category.
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Filter</h3>
+  </div>
+  <form method="GET" class="search-row" style="align-items:flex-end;">
+    <input type="hidden" name="kind" value="expenses">
+    <div class="form-row" style="margin-bottom:0;">
+      <label>From</label>
+      <input type="date" name="date_from" value="{{ date_from }}" class="filter-select">
+    </div>
+    <div class="form-row" style="margin-bottom:0;">
+      <label>To</label>
+      <input type="date" name="date_to" value="{{ date_to }}" class="filter-select">
+    </div>
+    <div class="form-row" style="margin-bottom:0;">
+      <label>Category</label>
+      <select name="category" class="filter-select">
+        <option value="">All Categories</option>
+        {% for c in expense_categories %}
+          <option value="{{ c }}" {{ 'selected' if expense_category == c }}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="submit-btn small">Filter</button>
+  </form>
+</div>
+
+<div class="card-grid three">
+  <div class="stat-card">
+    <span class="stat-label">Entries</span>
+    <span class="stat-value">{{ expense_rows|length }}</span>
+  </div>
+  <div class="stat-card accent-amber">
+    <span class="stat-label">Total (this filter)</span>
+    <span class="stat-value">₹{{ "%.2f"|format(expense_total) }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Categories</span>
+    <span class="stat-value">{{ expense_by_category|length }}</span>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>By Category</h3>
+    <div class="panel-head-actions">
+      <a href="{{ url_for('reports.report_csv', kind='expenses', date_from=date_from, date_to=date_to, category=expense_category) }}" class="action-btn secondary small">&#8681; Download CSV</a>
+      <a href="{{ url_for('reports.report_print', kind='expenses', date_from=date_from, date_to=date_to, category=expense_category) }}" target="_blank" class="action-btn small">Open Detailed Report &rarr;</a>
+    </div>
+  </div>
+  {% if expense_by_category %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Category</th><th>Amount</th><th>Share</th></tr></thead>
+    <tbody>
+      {% for cat, amt in expense_by_category %}
+      <tr>
+        <td class="cell-name">{{ cat }}</td>
+        <td>₹{{ "%.2f"|format(amt) }}</td>
+        <td style="width:220px;">
+          <div style="background:var(--border-soft); border-radius:6px; height:10px; overflow:hidden;">
+            <div style="background:var(--accent); height:100%; width:{{ (amt / expense_total * 100) if expense_total else 0 }}%;"></div>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty-state">No expenses match this filter.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h3>Expense Entries</h3>
+  </div>
+  {% if expense_rows %}
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead><tr><th>Date</th><th>Title</th><th>Category</th><th>Amount</th><th>Note</th></tr></thead>
+    <tbody>
+      {% for e in expense_rows %}
+      <tr>
+        <td>{{ e.date }}</td>
+        <td class="cell-name">{{ e.title }}</td>
+        <td><span class="badge badge-category">{{ e.category }}</span></td>
+        <td>₹{{ "%.2f"|format(e.amount) }}</td>
+        <td>{{ e.note or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="empty-state">No expenses match this filter.</p>
+  {% endif %}
+</div>
